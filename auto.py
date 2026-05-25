@@ -14,7 +14,8 @@ CHANNEL_ID = "-1003796754985"
 LOGO_FILE = "logo.png"
 
 # --- CONFIG KEDALUWARSA ---
-TANGGAL_EXPIRED = datetime(2026, 5, 27)
+# Diatur tepat sampai akhir hari pukul 23:59:59 agar hitungan harinya pas
+TANGGAL_EXPIRED = datetime(2026, 5, 27, 23, 59, 59)
 PESAN_EXPIRED = "<b>Script Expiret. Perbarui Telegram Premium📢</b>"
 
 def cek_status_expired():
@@ -103,16 +104,15 @@ def start(message):
 
     tgl_teks = TANGGAL_EXPIRED.strftime("%d %B %Y")
     
-    # --- LOGIKA HITUNG SISA HARI otomatis ---
-    hari_ini = datetime.now().date()
-    hari_expired = TANGGAL_EXPIRED.date()
-    sisa_hari = (hari_expired - hari_ini).days
+    # --- HITUNG SISA HARI AKURAT ---
+    sisa_waktu = TANGGAL_EXPIRED - datetime.now()
+    # .days + 1 agar sisa belasan jam di hari yang sama dibulatkan menjadi 1 hari lagi
+    sisa_hari = sisa_waktu.days + 1 
     
-    # Tentukan teks informasi masa berlaku berdasarkan jumlah hari
-    if sisa_hari <= 0:
-        # Penanganan jika pas di hari H sebelum jamnya habis
-        info_status = "⚠️ <b>PERINGATAN:</b> Masa berlaku Telegram Premium Anda <b>HABIS HARI INI</b>! Segera perbarui.\n\n"
-    elif sisa_hari in [1, 2, 3]:
+    # Menentukan teks peringatan berdasarkan sisa hari real-time
+    if sisa_hari <= 1:
+        info_status = "⚠️ <b>PERINGATAN:</b> Masa berlaku Telegram Premium Anda <b>HABIS BESOK / HARI INI</b>! Segera perbarui.\n\n"
+    elif sisa_hari in [2, 3]:
         info_status = f"⚠️ <b>PERINGATAN:</b> Masa berlaku Telegram Premium Anda tinggal <b>{sisa_hari} hari lagi</b>! Segera perbarui.\n\n"
     else:
         info_status = f"🟢 <b>Masa Aktif:</b> Berlaku sisa <b>{sisa_hari} hari lagi</b>.\n\n"
@@ -158,9 +158,7 @@ def get_isi(message):
     user_data[message.chat.id]['isi'] = message.text
     markup = types.InlineKeyboardMarkup()
     markup.row(types.InlineKeyboardButton("Nasional", callback_data="set_kat_Nasional"),
-               types.InlineKeyboardButton("Kabar Daerah", callback_data="set_kat_Kabar Daerah"),
-               types.InlineKeyboardButton("Economy", callback_data="set_kat_Economy"),
-               types.InlineKeyboardButton("Sports", callback_data="set_kat_Sports"))
+               types.InlineKeyboardButton("Kabar Daerah", callback_data="set_kat_Kabar Daerah"))
     bot.send_message(message.chat.id, "📂 Pilih <b>KATEGORI</b>:", parse_mode='HTML', reply_markup=markup)
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("set_kat_"))
