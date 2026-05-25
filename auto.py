@@ -1,7 +1,7 @@
 import telebot
 from telebot import types
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 import sys
 from PIL import Image
 from wordpress_xmlrpc import Client, WordPressPost
@@ -14,13 +14,32 @@ CHANNEL_ID = "-1003796754985"
 LOGO_FILE = "logo.png"
 
 # --- CONFIG KEDALUWARSA ---
-# Diatur tepat sampai akhir hari pukul 23:59:59 agar hitungan harinya pas
-TANGGAL_EXPIRED = datetime(2026, 5, 27, 23, 59, 59)
+TANGGAL_EXPIRED = datetime(2026, 5, 27)
 PESAN_EXPIRED = "<b>Script Expiret. Perbarui Telegram Premium📢</b>"
 
 def cek_status_expired():
     """Fungsi untuk mengecek apakah waktu sekarang sudah lewat batas"""
     return datetime.now() > TANGGAL_EXPIRED
+
+def hitung_sisa_hari():
+    """Fungsi pembantu untuk menghitung sisa hari kalender murni secara akurat"""
+    hari_ini = datetime.now().date()
+    hari_expired = TANGGAL_EXPIRED.date()
+    return (hari_expired - hari_ini).days
+
+def get_pesan_pengingat():
+    """Fungsi untuk membuat pesan sisa hari otomatis setelah posting atau start"""
+    sisa_hari = hitung_sisa_hari()
+    tgl_teks = TANGGAL_EXPIRED.strftime("%d %B %Y")
+    
+    if sisa_hari <= 0:
+        return "⚠️ <b>PERINGATAN:</b> Masa berlaku Telegram Premium Anda <b>HABIS HARI INI</b>! Segera perbarui.\n\n"
+    elif sisa_hari == 1:
+        return "⚠️ <b>PERINGATAN:</b> Masa berlaku Telegram Premium Anda <b>TINGGAL 1 HARI LAGI (BESOK)</b>! Segera perbarui.\n\n"
+    elif sisa_hari in [2, 3]:
+        return f"⚠️ <b>PERINGATAN:</b> Masa berlaku Telegram Premium Anda tinggal <b>{sisa_hari} hari lagi</b>! Segera perbarui.\n\n"
+    else:
+        return f"🟢 <b>Masa Aktif Bot:</b> Berlaku sisa <b>{sisa_hari} hari lagi</b> (Batas: {tgl_teks}).\n\n"
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
@@ -97,25 +116,12 @@ def gas_ke_wordpress_dan_channel(web_name, chat_id):
 # --- HANDLERS ---
 @bot.message_handler(commands=['start'])
 def start(message):
-    # Kirim notif jika expired
     if cek_status_expired():
         bot.send_message(message.chat.id, PESAN_EXPIRED, parse_mode='HTML')
         return
 
     tgl_teks = TANGGAL_EXPIRED.strftime("%d %B %Y")
-    
-    # --- HITUNG SISA HARI AKURAT ---
-    sisa_waktu = TANGGAL_EXPIRED - datetime.now()
-    # .days + 1 agar sisa belasan jam di hari yang sama dibulatkan menjadi 1 hari lagi
-    sisa_hari = sisa_waktu.days + 1 
-    
-    # Menentukan teks peringatan berdasarkan sisa hari real-time
-    if sisa_hari <= 1:
-        info_status = "⚠️ <b>PERINGATAN:</b> Masa berlaku Telegram Premium Anda <b>HABIS BESOK / HARI INI</b>! Segera perbarui.\n\n"
-    elif sisa_hari in [2, 3]:
-        info_status = f"⚠️ <b>PERINGATAN:</b> Masa berlaku Telegram Premium Anda tinggal <b>{sisa_hari} hari lagi</b>! Segera perbarui.\n\n"
-    else:
-        info_status = f"🟢 <b>Masa Aktif:</b> Berlaku sisa <b>{sisa_hari} hari lagi</b>.\n\n"
+    info_status = get_pesan_pengingat()
     
     bot.send_message(
         message.chat.id,
@@ -227,7 +233,10 @@ def callback_exec(call):
 
     if os.path.exists(path_foto): os.remove(path_foto)
     del user_data[chat_id]
-    bot.send_message(chat_id, "✅ <b>Tugas Selesai!</b>", parse_mode='HTML')
+    
+    # --- FITUR PENGINGAT SETELAH SELESAI POSTING ---
+    info_status = get_pesan_pengingat()
+    bot.send_message(chat_id, f"✅ <b>Tugas Selesai!</b>\n\n📢 {info_status}Silakan update / perpanjang <b>Telegram Premium</b> Anda agar bot tetap aktif.", parse_mode='HTML')
 
 if __name__ == "__main__":
     if cek_status_expired():
