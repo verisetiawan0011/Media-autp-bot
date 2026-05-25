@@ -158,7 +158,9 @@ def get_isi(message):
     user_data[message.chat.id]['isi'] = message.text
     markup = types.InlineKeyboardMarkup()
     markup.row(types.InlineKeyboardButton("Nasional", callback_data="set_kat_Nasional"),
-               types.InlineKeyboardButton("Kabar Daerah", callback_data="set_kat_Kabar Daerah"))
+               types.InlineKeyboardButton("Kabar Daerah", callback_data="set_kat_Kabar Daerah"),
+               types.InlineKeyboardButton("Economy", callback_data="set_kat_Economy"),
+               types.InlineKeyboardButton("Sports", callback_data="set_kat_Sports"))
     bot.send_message(message.chat.id, "📂 Pilih <b>KATEGORI</b>:", parse_mode='HTML', reply_markup=markup)
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("set_kat_"))
