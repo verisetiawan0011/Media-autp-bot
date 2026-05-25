@@ -2,6 +2,7 @@ import telebot
 from telebot import types
 import os
 from datetime import datetime
+import sys # Ditambahkan untuk menghentikan program di terminal jika expired
 from PIL import Image
 from wordpress_xmlrpc import Client, WordPressPost
 from wordpress_xmlrpc.methods.posts import NewPost, GetPost
@@ -11,6 +12,14 @@ from wordpress_xmlrpc.methods.media import UploadFile
 BOT_TOKEN = "8556458330:AAEzwAgfzY7hTrawvCnfdtH3SDpO5WY0cho"
 CHANNEL_ID = "-1003796754985"
 LOGO_FILE = "logo.png"
+
+# --- CONFIG KEDALUWARSA ---
+TANGGAL_EXPIRED = datetime(2026, 5, 27)
+PESAN_EXPIRED = "❌ Script ini telah kedaluwarsa pada 27 Mei 2026. Silahkan gunakan telegram premium untuk melanjutkan."
+
+def cek_status_expired():
+    """Fungsi pembantu untuk mengecek apakah waktu sekarang sudah lewat batas"""
+    return datetime.now() > TANGGAL_EXPIRED
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
@@ -87,7 +96,11 @@ def gas_ke_wordpress_dan_channel(web_name, chat_id):
 # --- HANDLERS ---
 @bot.message_handler(commands=['start'])
 def start(message):
-    # Langsung menyapa tanpa minta Key
+    # Validasi Expired
+    if cek_status_expired():
+        bot.send_message(message.chat.id, PESAN_EXPIRED)
+        return
+
     bot.send_message(
         message.chat.id,
         "🪩 <b>AUTOMEDIALAMPUNG-BOT READY!</b>\n\nSilakan kirim foto untuk mulai posting ke WordPress, atau buka portal berita melalui menu di bawah:🪩✍️",
@@ -97,6 +110,11 @@ def start(message):
 
 @bot.message_handler(content_types=['photo'])
 def handle_photo(message):
+    # Validasi Expired saat kirim foto
+    if cek_status_expired():
+        bot.send_message(message.chat.id, PESAN_EXPIRED)
+        return
+
     file_info = bot.get_file(message.photo[-1].file_id)
     downloaded = bot.download_file(file_info.file_path)
     path = f"temp_{message.chat.id}.jpg"
@@ -121,6 +139,10 @@ def get_isi(message):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("set_kat_"))
 def callback_kat(call):
+    if cek_status_expired():
+        bot.answer_callback_query(call.id, "Expired!")
+        bot.send_message(call.message.chat.id, PESAN_EXPIRED)
+        return
     user_data[call.message.chat.id]['kategori'] = call.data.replace("set_kat_", "")
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton("🕒 Sekarang", callback_data="set_time_now"),
@@ -129,6 +151,10 @@ def callback_kat(call):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("set_time_"))
 def callback_time(call):
+    if cek_status_expired():
+        bot.answer_callback_query(call.id, "Expired!")
+        bot.send_message(call.message.chat.id, PESAN_EXPIRED)
+        return
     if call.data == "set_time_now":
         user_data[call.message.chat.id]['waktu'] = "now"
         show_final(call.message)
@@ -155,6 +181,10 @@ def show_final(message):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("exec_"))
 def callback_exec(call):
+    if cek_status_expired():
+        bot.answer_callback_query(call.id, "Expired!")
+        bot.send_message(call.message.chat.id, PESAN_EXPIRED)
+        return
     chat_id = call.message.chat.id
     target = call.data.replace("exec_", "")
     bot.edit_message_text("⚙️ Memproses Berita ke Website...", chat_id, call.message.message_id)
@@ -173,4 +203,9 @@ def callback_exec(call):
     bot.send_message(chat_id, "✅ <b>Tugas Selesai!</b>", parse_mode='HTML')
 
 if __name__ == "__main__":
+    # Pengecekan lokal saat script dijalankan pertama kali di Termux
+    if datetime.now() > TANGGAL_EXPIRED:
+        print(PESAN_EXPIRED)
+        sys.exit() # Mematikan eksekusi script langsung di terminal
+        
     bot.infinity_polling()
