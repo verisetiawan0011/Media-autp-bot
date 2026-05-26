@@ -31,7 +31,7 @@ if hasattr(local_tz, 'localize'):
 else:
     TANGGAL_EXPIRED_TZ = datetime(2026, 5, 27, 23, 59, 59, tzinfo=local_tz)
 
-PESAN_EXPIRED = "<b>Script Expired. Perbarui Telegram Premium📢</b>"
+PESAN_EXPIRED = "<b>🚨Script Expired. Perbarui Telegram Premium📢</b>"
 
 def cek_status_expired():
     """Fungsi untuk mengecek apakah waktu sekarang sudah lewat batas"""
