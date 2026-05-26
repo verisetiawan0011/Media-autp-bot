@@ -18,7 +18,7 @@ except ImportError:
     local_tz = timezone(timedelta(hours=7))
 
 # --- KONFIGURASI UTAMA ---
-BOT_TOKEN = "8556458330:AAEzwAgfzY7hTrawvCnfdtH3SDpO5WY0cho"
+BOT_TOKEN = "8556458330:AAF1oMe810cHuk2_p7A3RN3o9965D-bL4ss"
 CHANNEL_ID = "-1003796754985"
 LOGO_FILE = "logo.png"
 
