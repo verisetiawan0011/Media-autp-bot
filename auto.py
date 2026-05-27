@@ -24,12 +24,12 @@ LOGO_FILE = "logo.png"
 
 # --- CONFIG KEDALUWARSA ---
 # Tanggal expired disuntikkan zona waktu lokal Jakarta/WIB
-TANGGAL_EXPIRED = datetime(2026, 5, 27, 23, 59, 59).replace(tzinfo=None)
+TANGGAL_EXPIRED = datetime(2026, 6, 27, 23, 59, 59).replace(tzinfo=None)
 # Kita buat versi sadar zona waktu untuk perbandingan real-time
 if hasattr(local_tz, 'localize'):
-    TANGGAL_EXPIRED_TZ = local_tz.localize(datetime(2026, 5, 27, 23, 59, 59))
+    TANGGAL_EXPIRED_TZ = local_tz.localize(datetime(2026, 6, 27, 23, 59, 59))
 else:
-    TANGGAL_EXPIRED_TZ = datetime(2026, 5, 27, 23, 59, 59, tzinfo=local_tz)
+    TANGGAL_EXPIRED_TZ = datetime(2026, 6, 27, 23, 59, 59, tzinfo=local_tz)
 
 PESAN_EXPIRED = "<b>🚨Script Expired. Perbarui Telegram Premium📢</b>"
 
